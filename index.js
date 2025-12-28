@@ -1685,10 +1685,8 @@ window.dom = (compName, options) => {
     // 样式处理
     let styleElement = null;
     const processStyle = (isolationEnabled = sty) => {
-        if (styleElement) {
-            styleElement.remove();
-            styleElement = null;
-        }
+        if (styleElement)
+            return;
         if (style) {
             // 根据隔离状态决定是否添加作用域
             const processedStyle = isolationEnabled ? addStyleScopeVueStyle(style, scopedId) : style;
@@ -1924,8 +1922,8 @@ window.dom = (compName, options) => {
             _componentInstances.set(mountTargetEl, componentScope);
             return {
                 ...componentScope,
-                getRootElement: () => mountTargetEl.querySelector(`[data-v-${scopedId}]`) || mountTargetEl.firstElementChild,
-                unmount: (sty) => {
+                root: () => mountTargetEl.querySelector(`[data-v-${scopedId}]`) || mountTargetEl.firstElementChild,
+                del: (sty) => {
                     if (lifecycleHooks.unmounted)
                         lifecycleHooks.unmounted.call(componentScope);
                     mountTargetEl.textContent = "";
@@ -1935,6 +1933,17 @@ window.dom = (compName, options) => {
                         styleElement = null;
                     }
                     _componentInstances.delete(mountTargetEl);
+                },
+                delSty: (name) => {
+                    if (!name) {
+                        if (styleElement) {
+                            styleElement.remove();
+                            styleElement = null;
+                        }
+                    }
+                    const styleElements = document.querySelector(`style[data-comp="${name}"]`);
+                    if (styleElements)
+                        styleElements.remove();
                 }
             };
         };
@@ -1969,12 +1978,10 @@ window.dom = (compName, options) => {
                 let target;
                 let styleIsolation;
                 // 参数解析逻辑
-                if (args.length === 1 && typeof args[0] === "object") {
+                if (args.length === 1 && typeof args[0] === "object")
                     ({ props = {}, target, styleIsolation } = args[0]);
-                }
-                else {
+                else
                     [props, target, styleIsolation] = args;
-                }
                 if (!target) {
                     console.error(`组件 "${targetCompName}" 挂载失败：缺少target参数`);
                     return null;
@@ -2121,4 +2128,3 @@ document.addEventListener("DOMContentLoaded", () => {
         _inlineScripts.length = 0;
     }, 0);
 });
-export {};
