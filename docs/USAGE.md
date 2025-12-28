@@ -306,7 +306,7 @@ const UserComponent = dom("user", {
 
          // 默认值
          console.log($pro.title)
-         
+
          // 如果存在值，则返回值，否则返回默认值
          console.log($pro.title.value || $pro.title)
 
@@ -341,7 +341,9 @@ const UserComponent = dom("user", {
 });
 
 // 挂载组件
-UserComponent("#user", true, { initAge: 18 });
+const uc = UserComponent({ name: "#app", pro: { initAge: 18 }});
+uc.del(); // 销毁组件 
+// uc.del(true); // 销毁组件和共享样式 
 ```
 
 #### r-dom 使用组件
@@ -361,12 +363,12 @@ UserComponent("#user", true, { initAge: 18 });
 ```html
 <!-- 定义路由页面 -->
 <div r-page="home">
-    <h1>首页(&route默认渲染容器是"view")</h1>
-    <p>{{ welcomeText }}</p>
+   <h1>首页(&route默认渲染容器是"view")</h1>
+   <p>{{ welcomeText }}</p>
 </div>
 
 <div r-page="about" &route="info">
-    <h1>关于我们(&route=""可指定渲染容器)</h1>
+   <h1>关于我们(&route=""可指定渲染容器)</h1>
 </div>
 
 <!-- 路由容器 -->
@@ -392,25 +394,25 @@ router.nav("home");
 ```html
 <!-- 定义引用，使用响应式数据需要加 {{  }} -->
 <body>
-    <div r="{{name}}">内容容器</div>
-    <input type="text" r="usernameInput">
+   <div r="{{name}}">内容容器</div>
+   <input type="text" r="usernameInput">
 </body>
 
 <!-- 初始阶段不能立即访问 -->
 <script>
-    const name = ref("container");
-    
-    // 在初始化访问引用
-    onMounted(() => {
-        console.log($r.container); // 获取DOM元素
-        $r.usernameInput.value = "默认值";
-    });
+   const name = ref("container");
+
+   // 在初始化访问引用
+   onMounted(() => {
+      console.log($r.container); // 获取DOM元素
+      $r.usernameInput.value = "默认值";
+   });
 </script>
 
 <!-- 给标签加一个src，功能和onMounted一样 -->
 <script src>
-    console.log($r.container); // 获取DOM元素
-    $r.usernameInput.value = "默认值";
+   console.log($r.container); // 获取DOM元素
+   $r.usernameInput.value = "默认值";
 </script>
 ```
 
