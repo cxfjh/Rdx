@@ -1,0 +1,14 @@
+{
+  "name": "rdx",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.5.3"
+  },
+  "private": true
+}
