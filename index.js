@@ -714,7 +714,32 @@ _registerDirective("r-api", async (el, urlExpr, scope, deps) => {
     // 配置解析
     const getConfig = () => {
         const headersAttr = el.getAttribute("hdr");
-        const headers = headersAttr ? JSON.parse(_ExpressionParser.parse(headersAttr, scope, deps) || "{}") : { "Content-Type": "application/json" };
+        let headers = { "Content-Type": "application/json" };
+        if (headersAttr) {
+            try {
+                // 先尝试直接解析 JSON 字符串
+                const parsed = JSON.parse(headersAttr);
+                if (parsed && typeof parsed === "object")
+                    headers = parsed;
+            }
+            catch (jsonError) {
+                // 如果直接解析失败，尝试作为表达式处理
+                try {
+                    const exprResult = _ExpressionParser.parse(headersAttr, scope, deps);
+                    if (typeof exprResult === "string") {
+                        // 如果是字符串，尝试解析为 JSON
+                        const parsedFromString = JSON.parse(exprResult);
+                        if (parsedFromString && typeof parsedFromString === "object")
+                            headers = parsedFromString;
+                    }
+                    else if (exprResult && typeof exprResult === "object")
+                        headers = exprResult; // 如果已经是对象，直接使用
+                }
+                catch (exprError) {
+                    console.warn("[r-api] headers 解析失败:", headersAttr, exprError);
+                }
+            }
+        }
         return {
             method: (el.getAttribute("meth") || "GET").toUpperCase(),
             headers,
@@ -1040,7 +1065,8 @@ _registerDirective("r-cp", (el, compName, scope, deps) => {
         const props = {};
         Array.from(el.attributes).forEach(attr => {
             if (attr.name.startsWith("$")) {
-                const propKey = attr.name.slice(1);
+                let propKey = attr.name.slice(1);
+                propKey = propKey.replace(/-(\w)/g, (_, c) => c.toUpperCase()); // 驼峰命名
                 props[propKey] = _ExpressionParser.parse(attr.value, scope, deps);
             }
         });
@@ -1183,7 +1209,8 @@ _registerDirective("r-dom", (el, compName, scope, deps) => {
         for (let i = 0; i < attributes.length; i++) {
             const attr = attributes[i];
             if (attr.name.startsWith("$")) {
-                const propKey = attr.name.slice(1);
+                let propKey = attr.name.slice(1);
+                propKey = propKey.replace(/-(\w)/g, (_, c) => c.toUpperCase()); // 驼峰命名
                 // 使用try-catch避免单个属性解析失败影响整体
                 try {
                     props[propKey] = _ExpressionParser.parse(attr.value, scope, deps, false);
