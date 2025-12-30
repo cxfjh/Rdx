@@ -2131,15 +2131,39 @@ window.dom = (compName: string, options: ComponentOptions): Function | object =>
             }
         }
 
+        // setup 自动暴露逻辑 ctx
         if (typeof scriptResult.setup === "function") {
             try {
-                const setupResult = scriptResult.setup();
+                interface SetupContext {
+                    [key: string]: any;
+                }
+
+                const setupContext: SetupContext = Object.create(null);
+                const setupFunc = scriptResult.setup;
+
+                // 创建私有上下文
+                const componentPrivateCtx: SetupContext = Object.create(null);
+
+                // 优先传 ctx 参数，忽略 this 绑定（适配箭头函数）
+                let manualReturn: SetupContext | undefined;
+                (function () {
+                    "use strict";
+                    // 执行 setup 时，只传 ctx 参数，不再绑定 this（箭头函数也能拿到 ctx）
+                    manualReturn = setupFunc(componentPrivateCtx);
+                })();
+
+                // 自动收集 ctx 上的变量
+                Object.keys(componentPrivateCtx).forEach(key => (!key.startsWith('__') && !key.startsWith('$')) && (setupContext[key] = componentPrivateCtx[key]));
+
+                // 合并结果并挂载
+                const setupResult: SetupContext = {...setupContext, ...(manualReturn as SetupContext | undefined)};
                 if (setupResult && typeof setupResult === "object") Object.assign(componentScope, setupResult);
             } catch (e) {
                 console.error(`[dom] 组件 "${compName}" setup 函数执行错误:`, e);
             }
         }
 
+        // 生命周期钩子
         const lifecycleHooks: Record<string, Function> = Object.create(null);
         LIFECYCLE_HOOKS.forEach(hook => (typeof scriptResult[hook] === "function") && (lifecycleHooks[hook] = scriptResult[hook]));
 

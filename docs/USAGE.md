@@ -147,8 +147,8 @@ provide({ name, age }); // 注册
 
 <script>
    const list = reactive([
-       { name: "张三", age: 18 },
-       { name: "李四", age: 10 },
+      { name: "张三", age: 18 },
+      { name: "李四", age: 10 },
    ]);
 </script>
 ```
@@ -179,10 +179,10 @@ provide({ name, age }); // 注册
 <script>
    const name = ref("fjh");
    const age = 17;
-   
+
    const hdr = {
-       "Authorization": "token",
-       "Content-Type": "application/json",
+      "Authorization": "token",
+      "Content-Type": "application/json",
    };
 </script>
 
@@ -274,16 +274,16 @@ provide({ name, age }); // 注册
 
 ```html
 <body>
-    <div id="user"></div>
-   
-    <!-- 使用 r-dom 指令渲染组件 -->
-    <div r-dom="user" $init-age="12"></div>
+   <div id="user"></div>
+
+   <!-- 使用 r-dom 指令渲染组件 -->
+   <div r-dom="user" $init-age="12"></div>
 </body>
 
 <script>
-    const UserComponent = dom("user", {
-       // HTML 模板
-       template: `
+   const UserComponent = dom("user", {
+      // HTML 模板
+      template: `
            <div class="user-card">
                <h3>{{ username }}</h3>
                <p ref="p">年龄：{{ age.value }}</p>
@@ -291,8 +291,8 @@ provide({ name, age }); // 注册
            </div>
         `,
 
-       // 样式
-       style: `
+      // 样式
+      style: `
            .user-card {
                border: 1px solid #ccc;
                padding: 16px;
@@ -308,61 +308,71 @@ provide({ name, age }); // 注册
            }
         `,
 
-       // 脚本逻辑
-       script: ({ $pro, $refs }) => {
-          // 初始化数据
-          const setup = () => {
-             // 如果存在值，则返回值，否则返回默认值
-             const age = ref($pro.initAge.value || $pro.initAge);
-             const username = ref("匿名用户");
+      // 脚本逻辑
+      script: ({ $pro, $refs }) => {
+         // 初始化数据
+         const setup = ($) => {
+            // 如果存在值，则返回值，否则返回默认值, 因为外部参数优先级高
+            const age = ref($pro.age.value);
+            const username = ref("匿名用户");
 
-             // 方法
-             const increaseAge = () => {
-                age.value++;
-                console.log($refs.p.innerText);
-             };
+            console.log($pro.age.value, $pro.title.value, $pro.x);
 
-             return { age, username, increaseAge };
-          };
+            // 方法
+            const increaseAge = () => {
+               age.value++;
+               console.log($refs.p.innerText);
+            };
 
-          // 生命周期钩子
-          function mounted() {
-             console.log("组件 DOM 挂载完成");
-             console.log(this.$refs.p); // DOM 挂载完成可以获取元素了
-          }
+            // 通过 $ 定义的数据可以不用 return ($ 可以通过修改 setup 函数参数可以自定义名字 setup(ctx) ctx.text)
+            $.text = ref("Hello");
+            $.setText = () => $.text.value = "Hello World";
+            // 如果 $ 定义的命名一样, return 暴露的数据会覆盖 $ 暴露的数据, return 优先级高
 
-          function unmounted() {
-             console.log(`组件 DOM 销毁时调用`);
-             console.log(this.$refs.p);
-          }
+            return { age, username, increaseAge };
+         };
 
-          return { setup, mounted, unmounted };
-       },
+         // 生命周期钩子
+         function mounted() {
+            console.log("组件 DOM 挂载完成");
+            console.log(this.$refs.p); // DOM 挂载完成可以获取元素了
+            console.log(this.age.value, this.text.value)
+         }
 
-       // 样式隔离（默认启用）
-       sty: true,
+         function unmounted() {
+            console.log(`组件 DOM 销毁时调用`);
+            console.log(this.$refs.p);
+         }
 
-       // 默认值
-       pro: {
-          initAge: 18
-       }
+         return { setup, mounted, unmounted };
+      },
 
-       // 自动挂载到指定元素
-       // to: "#user",
-    });
+      // 样式隔离（默认启用）
+      sty: true,
 
-    // name 指定渲染到 id 为 user 的元素， sty 默认为 true 表示启用样式隔离，pro 传递参数
-    const uc = UserComponent({ name: "#user", sty: true, pro: { initAge: 11 } });
-    
-    setTimeout(() => {
-        console.log(uc.root()); // 获取组件的根元素
-	    
-        uc.age.value = 20; // 修改内部数据
-        uc.$pro.initAge = 15; // 修改默认值
-	    
-        uc.delSty(); // 删除共享样式
-        uc.del(false); // 删除组件，true 和 false 表示是否删除共享样式，默认为 false 不删除
-    }, 2000);
+      // 定义初始或默认值
+      pro: {
+         age: ref(18)
+         title: ref("用户信息")
+         x: 12
+      }
+
+      // 自动挂载到指定元素
+      // to: "#user",
+   });
+
+   // name 指定渲染到 id 为 user 的元素， sty 默认为 true 表示启用样式隔离，pro 传递参数
+   const uc = UserComponent({ name: "#user", sty: true, pro: { age: ref(11) } });
+
+   setTimeout(() => {
+      console.log(uc.root()); // 获取组件的根元素
+
+      uc.age.value = 20; // 修改内部数据
+      uc.$pro.age = 15; // 修改默认值
+
+      uc.delSty(); // 删除共享样式
+      uc.del(false); // 删除组件，true 和 false 表示是否删除共享样式，默认为 false 不删除
+   }, 2000);
 </script>
 ```
 
